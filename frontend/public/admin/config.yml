@@ -1,0 +1,96 @@
+# Back-office de dettefrancaise.fr (Sveltia CMS, compatible Decap CMS).
+# Chaque enregistrement crée un commit sur main → Netlify reconstruit et republie le site (2 min).
+backend:
+  name: github
+  repo: Aguertil/dettefrance
+  branch: main
+  commit_messages:
+    create: "Admin : création de {{slug}}"
+    update: "Admin : mise à jour de {{slug}}"
+    delete: "Admin : suppression de {{slug}}"
+
+site_url: https://dettefrancaise.fr
+display_url: https://dettefrancaise.fr
+locale: fr
+media_folder: frontend/public/images/uploads
+public_folder: /images/uploads
+
+collections:
+  - name: contenu
+    label: Articles
+    description: "Tous les articles du site. « Publié » = visible ; « Programmé » = visible à partir de sa date (après la republication suivante) ; « Brouillon » = caché."
+    files:
+      - name: articles
+        label: Articles
+        file: frontend/src/data/blogData.json
+        format: json
+        fields:
+          - name: articles
+            label: Articles
+            label_singular: article
+            widget: list
+            summary: "{{fields.title}} — {{fields.status}}"
+            add_to_top: true
+            fields:
+              - { name: title, label: Titre, widget: string }
+              - { name: slug, label: "Adresse (slug)", widget: string, hint: "En minuscules, avec des tirets : dette-publique-2027. Devient dettefrancaise.fr/blog/dette-publique-2027. Ne pas changer après publication." , pattern: ['^[a-z0-9]+(-[a-z0-9]+)*$', "Minuscules, chiffres et tirets uniquement"] }
+              - { name: id, label: "Identifiant", widget: string, hint: "Mettre la même chose que l'adresse (slug)." }
+              - name: status
+                label: État
+                widget: select
+                default: draft
+                options:
+                  - { label: "Brouillon (caché)", value: draft }
+                  - { label: "Publié", value: published }
+                  - { label: "Programmé", value: scheduled }
+              - { name: publishDate, label: "Date de publication", widget: datetime, format: "YYYY-MM-DDTHH:mm:ss[Z]" }
+              - { name: updated, label: "Mis à jour le", widget: datetime, format: "YYYY-MM-DD", time_format: false, required: false }
+              - name: category
+                label: Rubrique
+                widget: select
+                options: ["Dette publique", "Investigations", "Scandales", "Sondages"]
+              - { name: author, label: Auteur, widget: string, default: "la rédaction de dettefrancaise.fr" }
+              - { name: excerpt, label: "Chapô (résumé, 1 à 2 phrases)", widget: text, hint: "Sert aussi de description dans Google (150 caractères environ)." }
+              - { name: image, label: "Image", widget: image, required: false }
+              - { name: tags, label: "Mots-clés", widget: list, required: false }
+              - { name: content, label: "Texte de l'article", widget: markdown, hint: "Commencer par un titre « # … ». Terminer par la liste des sources avec leurs liens." }
+              - { name: reviewNote, label: "Note interne (non publiée)", widget: text, required: false }
+          - name: categories
+            label: Rubriques
+            widget: list
+            summary: "{{fields.name}}"
+            fields:
+              - { name: id, label: Identifiant, widget: string }
+              - { name: name, label: Nom, widget: string }
+              - { name: slug, label: Slug, widget: string }
+              - { name: color, label: Couleur, widget: string }
+              - { name: description, label: Description, widget: string }
+
+  - name: chiffres
+    label: Chiffres de la dette
+    description: "À mettre à jour à chaque publication trimestrielle de l'Insee (fin mars, fin juin, fin septembre, fin décembre)."
+    files:
+      - name: dette
+        label: "Compteur et graphique"
+        file: frontend/src/data/debtData.json
+        format: json
+        fields:
+          - { name: currentDebt, label: "Dette publique (en euros, ex. 3595500000000)", widget: number, value_type: int }
+          - { name: debtToGdpPercent, label: "Dette en % du PIB", widget: number, value_type: float }
+          - { name: referenceDate, label: "Date du chiffre Insee (fin du trimestre)", widget: datetime, format: "YYYY-MM-DDTHH:mm:ss[Z]" }
+          - { name: referenceLabel, label: "Libellé de la date (ex. « fin juin 2026 »)", widget: string }
+          - { name: debtPerSecond, label: "Hausse estimée par seconde (euros)", widget: number, value_type: int }
+          - { name: annualInterest, label: "Charge annuelle des intérêts (euros)", widget: number, value_type: int }
+          - { name: interestPerSecond, label: "Intérêts par seconde (euros)", widget: number, value_type: int }
+          - { name: population, label: "Population", widget: number, value_type: int }
+          - { name: activePopulation, label: "Population active", widget: number, value_type: int }
+          - { name: gdp, label: "PIB annuel (euros)", widget: number, value_type: int }
+          - { name: _sources, label: "Sources (texte affiché)", widget: text }
+          - name: historicalData
+            label: "Historique (graphique de la page d'accueil)"
+            widget: list
+            summary: "{{fields.year}} : {{fields.gdpPercent}} %"
+            fields:
+              - { name: year, label: Année, widget: number, value_type: int }
+              - { name: debt, label: "Dette (euros)", widget: number, value_type: int }
+              - { name: gdpPercent, label: "% du PIB", widget: number, value_type: float }
